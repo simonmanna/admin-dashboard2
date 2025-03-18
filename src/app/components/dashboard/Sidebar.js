@@ -45,7 +45,7 @@ export default function Sidebar() {
         { label: "All Menu", href: "/menu" },
         { label: "Popular", href: "/popular" },
         { label: "Addons", href: "/addons" },
-        { label: "Choices", href: "/choices" },
+        { label: "Choices", href: "/admin/menu-option-groups" },
         { label: "Options", href: "/menu-options" },
       ],
     },
