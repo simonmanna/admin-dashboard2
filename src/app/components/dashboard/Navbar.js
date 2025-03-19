@@ -1,9 +1,18 @@
 "use client";
 // components/dashboard/Navbar.js
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "../../providers/SessionProvider"; // Adjust the path as needed
 
 export default function Navbar() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const { signOut, session } = useSession();
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    await signOut();
+    setIsProfileOpen(false);
+  };
 
   return (
     <header className="bg-white border-b bg-gray-800 border-gray-200 px-6 py-4">
@@ -27,9 +36,9 @@ export default function Navbar() {
               onClick={() => setIsProfileOpen(!isProfileOpen)}
             >
               <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
-                A
+                {session?.user?.email?.[0]?.toUpperCase() || "A"}
               </div>
-              <span>Admin</span>
+              <span>{session?.user?.email?.split("@")[0] || "Admin"}</span>
             </button>
             {isProfileOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
@@ -45,12 +54,12 @@ export default function Navbar() {
                 >
                   Settings
                 </a>
-                <a
-                  href="#"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                <button
+                  onClick={handleSignOut}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                 >
                   Sign out
-                </a>
+                </button>
               </div>
             )}
           </div>
