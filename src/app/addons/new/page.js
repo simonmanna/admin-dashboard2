@@ -1,14 +1,13 @@
-// app/addons/new/page.tsx
+// app/addons/new/page.js
 "use client";
 
 import { useState } from "react";
 import AddonForm from "../../../components/AddonForm";
-import { Addon } from "../../../types/addon";
 
 export default function NewAddon() {
-  const [error, setError] = (useState < string) | (null > null);
+  const [error, setError] = useState(null);
 
-  const handleCreateAddon = async (addonData: Partial<Addon>) => {
+  const handleCreateAddon = async (addonData) => {
     const response = await fetch("/api/addons", {
       method: "POST",
       headers: {
