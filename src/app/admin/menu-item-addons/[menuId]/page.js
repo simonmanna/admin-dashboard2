@@ -310,7 +310,7 @@ export default function MenuItemAddonsPage({ params }) {
                 </div>
               )}
               <h2 className="text-xl font-bold">{menuItem.name}</h2>
-              <p className="text-blue-100">${menuItem.price.toFixed(2)}</p>
+              <p className="text-blue-100">UGX {menuItem.price.toFixed(2)}</p>
             </div>
 
             <div className="md:w-3/4 p-6">
@@ -353,7 +353,7 @@ export default function MenuItemAddonsPage({ params }) {
                       <div className="bg-gray-50 px-4 py-3 border-b flex justify-between items-center">
                         <h4 className="font-medium">{item.addon?.name}</h4>
                         <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                          ${item.addon?.price.toFixed(2)}
+                          UGX {item.addon?.price.toFixed(2)}
                         </span>
                       </div>
                       <div className="p-4">
@@ -456,7 +456,7 @@ export default function MenuItemAddonsPage({ params }) {
                   <option value="">-- Select an addon --</option>
                   {availableAddons.map((addon) => (
                     <option key={addon.id} value={addon.id}>
-                      {addon.name} (${addon.price.toFixed(2)})
+                      {addon.name} (UGX {addon.price.toFixed(2)})
                     </option>
                   ))}
                 </select>

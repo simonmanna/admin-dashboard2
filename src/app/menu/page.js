@@ -84,13 +84,9 @@ export default function MenuList() {
   const sortedItems = useMemo(() => {
     const sorted = [...filteredItems].sort((a, b) => {
       const fieldA =
-        sortField === "created_at"
-          ? new Date(a[sortField]).getTime()
-          : a[sortField];
+        sortField === "name" ? new Date(a[sortField]).getTime() : a[sortField];
       const fieldB =
-        sortField === "created_at"
-          ? new Date(b[sortField]).getTime()
-          : b[sortField];
+        sortField === "name" ? new Date(b[sortField]).getTime() : b[sortField];
 
       if (fieldA < fieldB) return sortDirection === "asc" ? -1 : 1;
       if (fieldA > fieldB) return sortDirection === "asc" ? 1 : -1;
@@ -240,12 +236,6 @@ export default function MenuList() {
                 </th>
                 <th
                   className="py-3 px-4 text-left cursor-pointer hover:bg-gray-200"
-                  onClick={() => handleSort("created_at")}
-                >
-                  Created At <SortIndicator field="created_at" />
-                </th>
-                <th
-                  className="py-3 px-4 text-left cursor-pointer hover:bg-gray-200"
                   onClick={() => handleSort("name")}
                 >
                   Name <SortIndicator field="name" />
@@ -262,6 +252,18 @@ export default function MenuList() {
                 >
                   Status <SortIndicator field="is_popular" />
                 </th>
+                <th
+                  className="py-3 px-4 text-center cursor-pointer hover:bg-gray-200"
+                  onClick={() => handleSort("is_popular")}
+                >
+                  Popular <SortIndicator field="is_popular" />
+                </th>
+                <th
+                  className="py-3 px-4 text-left cursor-pointer hover:bg-gray-200"
+                  onClick={() => handleSort("created_at")}
+                >
+                  Created At <SortIndicator field="created_at" />
+                </th>
                 <th className="py-3 px-4 text-center">Actions</th>
               </tr>
             </thead>
@@ -275,9 +277,6 @@ export default function MenuList() {
                     }`}
                   >
                     <td className="py-3 px-4 whitespace-nowrap">{item.id}</td>
-                    <td className="py-3 px-4 whitespace-nowrap">
-                      {formatDate(item.created_at)}
-                    </td>
                     <td className="py-3 px-4 whitespace-nowrap">{item.name}</td>
                     <td className="py-3 px-4 whitespace-nowrap">
                       <span
@@ -291,11 +290,23 @@ export default function MenuList() {
                     <td className="py-3 px-4 text-center">
                       <span
                         className={`px-2 py-1 rounded-full text-xs ${getStatusColor(
+                          item.is_active
+                        )}`}
+                      >
+                        {item.is_active === 1 ? "Active" : "Inactive"}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs ${getStatusColor(
                           item.is_popular
                         )}`}
                       >
-                        {item.is_popular === 1 ? "Active" : "Inactive"}
+                        {item.is_popular === 1 ? "Popular" : "Not Popular"}
                       </span>
+                    </td>
+                    <td className="py-3 px-4 whitespace-nowrap">
+                      {formatDate(item.created_at)}
                     </td>
                     <td className="py-3 px-4 text-center">
                       <div className="flex justify-center space-x-1">

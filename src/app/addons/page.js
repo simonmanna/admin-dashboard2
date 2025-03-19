@@ -40,8 +40,8 @@ export default function AddonsList() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="max-w-8xl mx-auto p-1">
+      <div className="flex justify-between items-left mb-6">
         <h1 className="text-2xl font-bold">Menu Addons</h1>
         <Link
           href="/addons/new"
@@ -86,7 +86,7 @@ export default function AddonsList() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    ${addon.price.toFixed(2)}
+                    UGX {addon.price.toFixed(2)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span

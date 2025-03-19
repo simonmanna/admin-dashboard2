@@ -1,133 +1,89 @@
+// components/MenuOptionList.js
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function MenuOptionList({ initialMenuOptions }) {
-  const [menuOptions] = useState(initialMenuOptions);
-  const [filter, setFilter] = useState("all");
+  const [menuOptions, setMenuOptions] = useState(initialMenuOptions);
+  const router = useRouter();
 
-  const filteredOptions = menuOptions.filter((option) => {
-    if (filter === "active") return option.is_active;
-    if (filter === "inactive") return !option.is_active;
-    return true;
-  });
+  // Function to delete a menu option
+  const deleteMenuOption = async (id) => {
+    if (window.confirm("Are you sure you want to delete this option?")) {
+      try {
+        const response = await fetch(`/api/menu-options/${id}`, {
+          method: "DELETE",
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to delete");
+        }
+
+        // Remove the deleted option from the state
+        setMenuOptions(menuOptions.filter((option) => option.id !== id));
+        // Refresh the page data
+        router.refresh();
+      } catch (error) {
+        console.error("Error deleting menu option:", error);
+      }
+    }
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div className="space-x-2">
-          <button
-            onClick={() => setFilter("all")}
-            className={`px-3 py-1 rounded-md ${
-              filter === "all" ? "bg-blue-600 text-white" : "bg-gray-200"
-            }`}
-          >
-            All
-          </button>
-          <button
-            onClick={() => setFilter("active")}
-            className={`px-3 py-1 rounded-md ${
-              filter === "active" ? "bg-blue-600 text-white" : "bg-gray-200"
-            }`}
-          >
-            Active
-          </button>
-          <button
-            onClick={() => setFilter("inactive")}
-            className={`px-3 py-1 rounded-md ${
-              filter === "inactive" ? "bg-blue-600 text-white" : "bg-gray-200"
-            }`}
-          >
-            Inactive
-          </button>
-        </div>
-        <Link
-          href="/menu-options/new"
-          className="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"
-        >
-          Add New Option
-        </Link>
-      </div>
-
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Description
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Price Adj.
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {filteredOptions.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
-                  No menu options found
+    <div className="bg-white shadow-md rounded-lg overflow-hidden">
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Name
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Description
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Price
+            </th>
+            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Actions
+            </th>
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {menuOptions.length > 0 ? (
+            menuOptions.map((option) => (
+              <tr key={option.id}>
+                <td className="px-6 py-4 whitespace-nowrap">{option.name}</td>
+                <td className="px-6 py-4">{option.description}</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  UGX {option.price_adjustment}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-right">
+                  <Link
+                    href={`/menu-options/${option.id}/edit`}
+                    className="text-indigo-600 hover:text-indigo-900 mr-4"
+                  >
+                    Edit
+                  </Link>
+                  {/* <button
+                    onClick={() => deleteMenuOption(option.id)}
+                    className="text-red-600 hover:text-red-900"
+                  >
+                    Delete
+                  </button> */}
                 </td>
               </tr>
-            ) : (
-              filteredOptions.map((option) => (
-                <tr key={option.id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <Link
-                      href={`/menu-options/${option.id}`}
-                      className="text-blue-600 hover:underline"
-                    >
-                      {option.name}
-                    </Link>
-                  </td>
-                  <td className="px-6 py-4">
-                    {option.description ? (
-                      option.description.length > 50 ? (
-                        `${option.description.substring(0, 50)}...`
-                      ) : (
-                        option.description
-                      )
-                    ) : (
-                      <span className="text-gray-400">No description</span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    ${option.price_adjustment?.toFixed(2) || "0.00"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        option.is_active
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {option.is_active ? "Active" : "Inactive"}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <Link
-                      href={`/menu-options/${option.id}/edit`}
-                      className="text-indigo-600 hover:text-indigo-900 mr-4"
-                    >
-                      Edit
-                    </Link>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="4" className="px-6 py-4 text-center text-gray-500">
+                No menu options found. Create one to get started.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
     </div>
   );
 }

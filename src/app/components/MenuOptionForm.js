@@ -116,7 +116,7 @@ export default function MenuOptionForm({ menuOption, id }) {
           htmlFor="price_adjustment"
           className="block text-sm font-medium text-gray-700"
         >
-          Price Adjustment ($)
+          Price Adjustment (UGX)
         </label>
         <input
           type="number"

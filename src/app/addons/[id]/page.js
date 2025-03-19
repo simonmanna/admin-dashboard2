@@ -4,12 +4,12 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { use } from "react";
+// Remove the use import as we don't need it
+// import { use } from "react";
 
 export default function AddonDetail({ params }) {
-  // Unwrap the params promise using React.use()
-  const resolvedParams = use(params);
-  const id = resolvedParams.id;
+  // Access the id directly from params
+  const id = params.id;
 
   const router = useRouter();
   const [addon, setAddon] = useState(null);
@@ -20,6 +20,7 @@ export default function AddonDetail({ params }) {
   useEffect(() => {
     const fetchAddon = async () => {
       try {
+        // Fix the template literals by using backticks
         const response = await fetch(`/api/addons/${id}`);
 
         if (!response.ok) {
@@ -46,6 +47,7 @@ export default function AddonDetail({ params }) {
     setDeleting(true);
 
     try {
+      // Fix the template literals by using backticks
       const response = await fetch(`/api/addons/${id}`, {
         method: "DELETE",
       });
@@ -93,7 +95,7 @@ export default function AddonDetail({ params }) {
 
         <div className="mb-4">
           <h2 className="text-sm font-medium text-gray-500">Price</h2>
-          <p className="mt-1">${addon.price.toFixed(2)}</p>
+          <p className="mt-1">UGX {addon.price.toFixed(2)}</p>
         </div>
 
         <div className="mb-4">

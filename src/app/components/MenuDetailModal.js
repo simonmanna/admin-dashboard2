@@ -86,7 +86,7 @@ export default function MenuDetailModal({ item, onClose }) {
             <h2 className="text-2xl font-bold">{item.name}</h2>
             {item.price !== null && (
               <span className="text-xl font-bold text-green-600">
-                ${item.price.toFixed(2)}
+                UGX {item.price.toFixed(2)}
               </span>
             )}
           </div>

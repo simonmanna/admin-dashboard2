@@ -6,8 +6,7 @@ import { use } from "react";
 
 export default function EditAddon({ params }) {
   // Unwrap the params promise using React.use()
-  const resolvedParams = use(params);
-  const id = resolvedParams.id;
+  const id = params.id;
   const [addon, setAddon] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

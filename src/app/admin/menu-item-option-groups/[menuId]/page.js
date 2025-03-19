@@ -199,7 +199,7 @@ export default function MenuItemOptionGroupsPage({ params }) {
               Back to Menu Items
             </Link>
             <h1 className="text-2xl font-bold mt-2">
-              Manage Option Groups for {menuItem.name}
+              Manage Options for Choice {menuItem.name}
             </h1>
             <p className="text-gray-600">{menuItem.description}</p>
           </div>
