@@ -1,13 +1,12 @@
-// /app/orders/page.tsx
+// /app/orders/page.js
 "use client";
 
 import { useEffect, useState } from "react";
 import OrderTable from "../components/OrderTable";
 import { getOrders } from "../lib/supabase";
-import { Order } from "../lib/types";
 
 export default function Orders() {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
