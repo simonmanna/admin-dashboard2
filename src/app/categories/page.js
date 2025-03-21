@@ -6,6 +6,7 @@ import Link from "next/link";
 import { createClient } from "@supabase/supabase-js";
 import MenuDetailModal from "../components/MenuDetailModal";
 import EditModal from "../components/EditModal";
+import AddNewItemModal from "../components/AddNewItemModal";
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
@@ -14,6 +15,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState([]);
+  const [allFlatCategories, setAllFlatCategories] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
   const [currentCategory, setCurrentCategory] = useState(null);
   const [categoryPath, setCategoryPath] = useState([]);
@@ -21,6 +23,8 @@ export default function CategoriesPage() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [itemToEdit, setItemToEdit] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isAddingNew, setIsAddingNew] = useState(false);
+  const [addingItemType, setAddingItemType] = useState(null);
 
   // Fetch all categories on component mount
   useEffect(() => {
@@ -37,6 +41,9 @@ export default function CategoriesPage() {
     if (error) {
       console.error("Error fetching categories:", error);
     } else if (data) {
+      // Save flat list for parent selection dropdown
+      setAllFlatCategories(data);
+
       // Build the category tree
       const categoryTree = buildCategoryTree(data);
       setCategories(categoryTree);
@@ -269,6 +276,75 @@ export default function CategoriesPage() {
     setLoading(false);
   }
 
+  // Open add new item modal
+  function handleAddNewClick(type) {
+    setAddingItemType(type);
+    setIsAddingNew(true);
+  }
+
+  // Close add new item modal
+  function handleCloseAddNewModal() {
+    setIsAddingNew(false);
+    setAddingItemType(null);
+  }
+
+  // Save new item (category or menu item)
+  async function handleSaveNewItem(newItem) {
+    setLoading(true);
+
+    try {
+      const type = addingItemType;
+      const tableName = type === "category" ? "categories" : "menus";
+
+      // Add created_at timestamp
+      newItem.created_at = new Date().toISOString();
+      newItem.updated_at = new Date().toISOString();
+
+      // Insert the new item
+      const { data, error } = await supabase
+        .from(tableName)
+        .insert(newItem)
+        .select();
+
+      if (error) {
+        console.error(`Error creating new ${type}:`, error);
+        alert(`Failed to create new ${type}: ${error.message}`);
+      } else {
+        // Handle successful creation
+        if (type === "category") {
+          // Refresh all categories
+          fetchCategories();
+        } else if (type === "menuItem" && currentCategory) {
+          // If we're adding a menu item to current category, refresh only that
+          const { data: newMenuItems, error: menuError } = await supabase
+            .from("menus")
+            .select("*")
+            .eq("category_id", currentCategory.id)
+            .order("view_order");
+
+          if (!menuError) {
+            setMenuItems(newMenuItems || []);
+          }
+        }
+
+        // Close the modal
+        handleCloseAddNewModal();
+
+        // Show success message
+        alert(
+          `New ${
+            type === "category" ? "category" : "menu item"
+          } created successfully!`
+        );
+      }
+    } catch (error) {
+      console.error("Error saving new item:", error);
+      alert(`An unexpected error occurred: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   // Handle image upload
   async function handleImageUpload(file) {
     try {
@@ -304,6 +380,26 @@ export default function CategoriesPage() {
     } catch (error) {
       console.error("Detailed upload error:", error);
       return null;
+    }
+  }
+
+  // Determine what type of item can be added based on current view
+  function getAddButtonContext() {
+    if (!currentCategory) {
+      // At root level, can only add categories
+      return { type: "category", label: "Add Category" };
+    } else if (
+      currentCategory.children &&
+      currentCategory.children.length > 0
+    ) {
+      // In a category with subcategories, can add more subcategories
+      return { type: "category", label: "Add Subcategory" };
+    } else {
+      // In a leaf category, can add menu items or create a subcategory
+      return [
+        { type: "menuItem", label: "Add Menu Item" },
+        { type: "category", label: "Add Subcategory" },
+      ];
     }
   }
 
@@ -353,15 +449,73 @@ export default function CategoriesPage() {
         </header>
 
         <main>
-          {/* Navigation buttons */}
-          {currentCategory && (
-            <button
-              onClick={handleBackClick}
-              className="mb-4 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 flex items-center"
-            >
-              <span className="mr-1">←</span> Back
-            </button>
-          )}
+          {/* Navigation and action buttons */}
+          <div className="flex flex-wrap justify-between items-center mb-6">
+            {currentCategory && (
+              <button
+                onClick={handleBackClick}
+                className="mb-2 sm:mb-0 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 flex items-center"
+              >
+                <span className="mr-1">←</span> Back
+              </button>
+            )}
+
+            {/* Add new buttons */}
+            <div className="flex space-x-2">
+              {!Array.isArray(getAddButtonContext()) ? (
+                // Single button case
+                <button
+                  onClick={() => handleAddNewClick(getAddButtonContext().type)}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 mr-1"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                    />
+                  </svg>
+                  {getAddButtonContext().label}
+                </button>
+              ) : (
+                // Multiple buttons case
+                getAddButtonContext().map((btn, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleAddNewClick(btn.type)}
+                    className={`px-4 py-2 rounded-md flex items-center ${
+                      btn.type === "menuItem"
+                        ? "bg-green-600 text-white hover:bg-green-700"
+                        : "bg-blue-600 text-white hover:bg-blue-700"
+                    }`}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 mr-1"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                      />
+                    </svg>
+                    {btn.label}
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
 
           {loading ? (
             <div className="flex justify-center items-center h-64">
@@ -424,10 +578,53 @@ export default function CategoriesPage() {
                       </div>
                     </div>
                   ))}
+
+                  {categories.length === 0 && (
+                    <div className="col-span-full flex flex-col items-center justify-center py-12 text-gray-500">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-16 w-16 mb-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1}
+                          d="M4 6h16M4 12h16M4 18h7"
+                        />
+                      </svg>
+                      <p className="text-xl">No categories yet</p>
+                      <p className="mb-4">
+                        Create your first category to get started
+                      </p>
+                      <button
+                        onClick={() => handleAddNewClick("category")}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5 mr-1"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                          />
+                        </svg>
+                        Add Category
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : currentCategory.children &&
                 currentCategory.children.length > 0 ? (
-                /* Subcategories */
+                /* Subcategories view */
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {currentCategory.children.map((subcategory) => (
                     <div
@@ -483,7 +680,7 @@ export default function CategoriesPage() {
                   ))}
                 </div>
               ) : (
-                /* Menu items */
+                /* Menu items view */
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {menuItems.map((item) => (
                     <div
@@ -495,7 +692,7 @@ export default function CategoriesPage() {
                         {item.imageUrl ? (
                           <img
                             src={item.imageUrl}
-                            alt={item.name}
+                            alt={item.name || ""}
                             className="h-full w-full object-cover"
                           />
                         ) : (
@@ -522,17 +719,25 @@ export default function CategoriesPage() {
                             />
                           </svg>
                         </button>
+                        {item.is_popular ? (
+                          <div className="absolute bottom-2 left-2 bg-yellow-500 text-white px-2 py-1 rounded-md text-xs">
+                            Popular
+                          </div>
+                        ) : null}{" "}
+                        {/* {!item.is_active && (
+                          <div className="absolute bottom-2 right-2 bg-red-500 text-white px-2 py-1 rounded-md text-xs">
+                            Inactive
+                          </div>
+                        )} */}
                       </div>
                       <div className="p-4">
-                        <div className="flex justify-between items-start">
+                        <div className="flex justify-between items-center">
                           <h3 className="text-lg font-semibold text-gray-800">
                             {item.name}
                           </h3>
-                          {item.price && (
-                            <span className="font-semibold text-green-600">
-                              UGX {item.price.toFixed(2)}
-                            </span>
-                          )}
+                          <span className="font-medium text-green-600">
+                            UGX {Number(item.price).toLocaleString()}
+                          </span>
                         </div>
                         {item.description && (
                           <p className="mt-1 text-gray-600 line-clamp-2">
@@ -542,6 +747,47 @@ export default function CategoriesPage() {
                       </div>
                     </div>
                   ))}
+
+                  {menuItems.length === 0 && (
+                    <div className="col-span-full flex flex-col items-center justify-center py-12 text-gray-500">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-16 w-16 mb-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1}
+                          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                        />
+                      </svg>
+                      <p className="text-xl">No menu items yet</p>
+                      <p className="mb-4">Add menu items to this category</p>
+                      <button
+                        onClick={() => handleAddNewClick("menuItem")}
+                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 flex items-center"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5 mr-1"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                          />
+                        </svg>
+                        Add Menu Item
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -549,18 +795,39 @@ export default function CategoriesPage() {
         </main>
       </div>
 
-      {/* Menu Item Detail Modal */}
+      {/* Menu detail modal */}
       {selectedItem && (
-        <MenuDetailModal item={selectedItem} onClose={handleCloseModal} />
+        <MenuDetailModal
+          item={selectedItem}
+          onClose={handleCloseModal}
+          onEdit={() =>
+            handleEditClick(selectedItem, "menuItem", {
+              stopPropagation: () => {},
+            })
+          }
+        />
       )}
 
-      {/* Edit Modal */}
+      {/* Edit modal */}
       {isEditing && itemToEdit && (
         <EditModal
           item={itemToEdit}
           onClose={handleCloseEditModal}
           onSave={handleSaveEdit}
           onImageUpload={handleImageUpload}
+          allCategories={allFlatCategories}
+        />
+      )}
+
+      {/* Add new item modal */}
+      {isAddingNew && (
+        <AddNewItemModal
+          type={addingItemType}
+          onClose={handleCloseAddNewModal}
+          onSave={handleSaveNewItem}
+          onImageUpload={handleImageUpload}
+          currentCategoryId={currentCategory ? currentCategory.id : null}
+          allCategories={allFlatCategories}
         />
       )}
     </div>
