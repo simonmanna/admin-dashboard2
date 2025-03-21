@@ -3,9 +3,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Sidebar from "../../components/Sidebar";
-import OrderDetails from "../../components/OrderDetails";
-import { getOrderById, getDeliveryPersons } from "../../lib/supabase";
+import Sidebar from "../../../components/Sidebar";
+import OrderDetails from "../../../components/OrderDetails";
+import { getOrderById, getDeliveryPersons } from "../../../lib/supabase";
 
 export default function OrderPage({ params }) {
   const router = useRouter();
