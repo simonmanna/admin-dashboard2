@@ -1,75 +1,58 @@
-// pages/api/orders/[id].js
-import { createClient } from '@supabase/supabase-js';
+// app/api/orders/[id]/route.js
+import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server"; // Adjust path if needed
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+export async function GET(request, { params }) {
+  try {
+    const { id } = params;
+    const supabase = createClient();
 
-export default async function handler(req, res) {
-  if (req.method !== 'GET' && req.method !== 'PATCH') {
-    return res.status(405).json({ message: 'Method not allowed' });
-  }
+    // Fetch single order by ID
+    const { data: order, error } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("id", id)
+      .single();
 
-  const { id } = req.query;
-
-  if (!id || typeof id !== 'string') {
-    return res.status(400).json({ message: 'Order ID is required' });
-  }
-
-  // Handle GET request
-  if (req.method === 'GET') {
-    try {
-      const { data, error } = await supabase
-        .from('orders')
-        .select(`
-          *,
-          profiles:user_id (id, full_name, email),
-          delivery_person:delivery_person_id (id, name, phone)
-        `)
-        .eq('id', id)
-        .single();
-
-      if (error) {
-        throw error;
-      }
-
-      if (!data) {
-        return res.status(404).json({ message: 'Order not found' });
-      }
-
-      return res.status(200).json(data);
-    } catch (error) {
-      console.error('API error:', error);
-      return res.status(500).json({ message: 'Failed to fetch order', error: error.message });
+    if (error) {
+      console.error("Supabase error:", error);
+      return NextResponse.json(
+        { error: "Failed to fetch order from database" },
+        { status: 500 }
+      );
     }
-  }
-  
-  // Handle PATCH request (update order)
-  if (req.method === 'PATCH') {
-    const updates = req.body;
-    
-    if (!updates) {
-      return res.status(400).json({ message: 'Update data is required' });
-    }
-    
-    try {
-      // Add updated_at timestamp
-      updates.updated_at = new Date().toISOString();
-      
-      const { data, error } = await supabase
-        .from('orders')
-        .update(updates)
-        .eq('id', id)
-        .select();
 
-      if (error) {
-        throw error;
+    if (!order) {
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+
+    // Process order_items field
+    let orderItems = order.order_items;
+
+    if (typeof orderItems === "string") {
+      try {
+        orderItems = JSON.parse(orderItems);
+      } catch (e) {
+        console.error(`Error parsing order_items for order ${order.id}:`, e);
+        orderItems = [];
       }
-
-      return res.status(200).json({ message: 'Order updated successfully', data });
-    } catch (error) {
-      console.error('API error:', error);
-      return res.status(500).json({ message: 'Failed to update order', error: error.message });
     }
+
+    if (!Array.isArray(orderItems)) {
+      orderItems = [];
+    }
+
+    const processedOrder = {
+      ...order,
+      order_items: orderItems,
+    };
+
+    return NextResponse.json(processedOrder, { status: 200 });
+  } catch (error) {
+    console.error("API error:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch order data" },
+      { status: 500 }
+    );
   }
 }
