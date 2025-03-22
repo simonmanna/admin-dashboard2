@@ -1,9 +1,11 @@
 // /app/orders/page.js
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, React } from "react";
 import OrderTable from "../components/OrderTable";
 import { getOrders } from "../lib/supabase";
+import { Eye } from "lucide-react";
+import { useRouter } from "next/navigation"; // Use next/navigation instead of next/router
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);

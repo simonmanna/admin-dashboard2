@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Navbar from "../components/dashboard/Navbar";
 import Sidebar from "../components/dashboard/Sidebar";
+import "leaflet/dist/leaflet.css";
 
 export default function DashboardLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);

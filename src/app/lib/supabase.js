@@ -16,6 +16,7 @@ async function getOrders() {
         delivery_address,
         created_at,
         status,
+        delivery_method,
         user_id,
         total_amount_vat,
         profiles:user_id (
@@ -40,6 +41,7 @@ async function getOrders() {
         total_amount_vat: order.total_amount_vat,
         customer_name: order.profiles?.full_name || "Unknown",
         customer_phone: order.profiles?.phone_number || "N/A",
+        delivery_method: order.delivery_method,
       })) || [];
 
     return { data: formattedData, error: null };
