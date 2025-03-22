@@ -3,9 +3,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Sidebar from "../../../components/Sidebar";
-import OrderDetails from "../../../components/OrderDetails";
-import { getOrderById, getDeliveryPersons } from "../../../lib/supabase";
+import Sidebar from "../../components/Sidebar";
+import OrderDetails from "../../components/OrderDetails";
+import { getOrderById, getDeliveryPersons } from "../../lib/supabase";
 
 export default function OrderPage({ params }) {
   const router = useRouter();
@@ -48,7 +48,6 @@ export default function OrderPage({ params }) {
 
   return (
     <div className="flex">
-      <Sidebar />
       <div className="flex-1 ml-64 p-8">
         <div className="flex items-center mb-6">
           <button
