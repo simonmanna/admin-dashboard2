@@ -1,19 +1,14 @@
-// File: lib/supabase-auth.ts
+// File: lib/supabase-auth.js
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "./supabase/server";
 import { cookies } from "next/headers";
-import { Database } from "@/types/supabase";
 
 // This is the implementation of createRouteHandlerClient
-export function createRouteHandlerClient<T>({
-  cookies,
-}: {
-  cookies: () => any;
-}) {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+export function createRouteHandlerClient({ cookies }) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  return createClient<T>(supabaseUrl, supabaseKey, {
+  return createClient(supabaseUrl, supabaseKey, {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
@@ -29,5 +24,5 @@ export function createRouteHandlerClient<T>({
 
 // Helper function to get server-side Supabase client
 export function getServerSupabase() {
-  return createServerComponentClient<Database>({ cookies });
+  return createServerComponentClient({ cookies });
 }
